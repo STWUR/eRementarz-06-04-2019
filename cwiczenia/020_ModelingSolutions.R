@@ -44,4 +44,23 @@ glimpse(credits)
 summary(credits)
 df_status(credits)
 
-# 
+
+# zapropononuj modyfikacje, utworzenie cech lub usuniecie cech w ramce danych
+
+# usuniecie Id klienta - nie jest to cecha, na podstawie ktorej mozna wnioskowac
+
+credits <- credits %>% column_to_rownames("X")
+colnames(credits)
+
+# przekodowanie numeric na factor i dodanie poziomow
+
+credits$Job <- factor(x = as.character(credits$Job), labels = c('unskilled and non-resident',
+                                                                'unskilled and resident',
+                                                                'skilled',
+                                                                'highly skilled')
+)
+
+credits_wna <- credits %>% mutate_at(c("Saving.accounts", "Checking.account"), fct_explicit_na)
+
+
+
