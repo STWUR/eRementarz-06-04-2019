@@ -1,0 +1,103 @@
+---
+title: "Erementarz"
+author: "Michał Burdukiewicz, Bartosz Pawliczak"
+date: "6. kwietnia 2019"
+output:
+  ioslides_presentation:
+    logo: banner.png
+  slidy_presentation: default
+  beamer_presentation: default
+---
+
+## Wczytanie danych
+
+Do **R** można wczytywać dane na wiele sposobów, my skorzystamy z funkcji **read.csv**.
+
+Najpierw warto sprawdzić jaki katalog jest ,,domyślny'' i w razie potrzeby zmienić go na inny za pomocą funkcji **setwd()**.
+
+```{r}
+getwd()
+data <- read.csv("data/german_credit_data.csv", 
+                       encoding = "UTF-8")
+```
+
+Do zmiennej *data* przypisaliśmy wynik funkcji *read.csv*.
+
+
+## Obiekty
+
+```{r}
+# wymiary tabeli
+dim(data)
+
+# pierwsze wiersze z tabeli
+head(data)
+```
+
+## Co to za dane?
+**German credit data** dotyczą klientów banku i oceny ich zdolności kredytowej. Występujące zmienne:
+
+- X - liczba porządkowa,
+- Age - wiek w latach,
+- Sex - płeć,
+- Job - rodzaj pracy, gdzie wyższa liczba oznacza wyższy stopień wykwalifikowania,
+- Housing - mieszkanie własne, czynszowe, bądź bezczynszowe,
+- Saving accounts - im więcej, tym wyższa wartość konta oszczędnościowego/obligacji,
+
+##
+- Credit amount - kwota kredytu w markach niemieckich,
+- Duration - czas trwania (w miesiącach),
+- Purpos - przeznaczenie kredytu,
+- Risk - klient dobry/zły.
+
+<img src="kaggle.png" width="800">
+
+
+
+## Obiekty
+
+```{r}
+# podsumowanie tabeli
+summary(data)
+```
+
+##Interfejs w RStudio 
+
+<img src="img1.png" width="800">
+
+
+##Przeglądanie danych
+Przy niedużych zbiorach danych możemy w łatwy sposób poznać strukturę:
+<img src="img2.png" width="800">
+
+##Podstawowe zależności
+```{r, message=FALSE, warning = FALSE}
+pairs(data[,c(1,8,9)])
+```
+
+##Braki w danych, poprawność
+Istnieje wiele podejść do tego tematu, np. zastąpienie konkretną wartością, zastąpienie jakąś z agregacji, pominięcie rekordów lub skorzystanie z predykcji.
+```{r, message=FALSE, warning = FALSE}
+data<-na.omit(data)
+```
+
+
+##Przeglądanie większych zbiorów danych
+**SQL**? Warto spróbować!
+```{r, message=FALSE, warning = FALSE}
+library(sqldf)
+zapytanie1<-"select Age, Sex, Risk from data order by Age desc limit 5" 
+sqldf(zapytanie1)
+```
+##Wczytywanie konkretnych wyników
+```{r, message=FALSE, warning = FALSE}
+zapytanie0<-read.csv.sql("data/german_credit_data.csv",
+sql = "select Age, Sex, Risk from file order by Age desc limit 5") 
+print(zapytanie0)
+```
+
+##Pakiet dplyr
+Jeden z popularniejszyh pakietów do przetwarzania danych.
+```{r, message=FALSE, warning = FALSE}
+library(dplyr)
+```
