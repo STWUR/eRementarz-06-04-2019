@@ -44,6 +44,7 @@ glimpse(credits)
 summary(credits)
 df_status(credits)
 
+#######  PREPROCESSING DANYCH  #####################################################################
 
 # zapropononuj modyfikacje, utworzenie cech lub usuniecie cech w ramce danych
 
@@ -52,7 +53,7 @@ df_status(credits)
 credits <- credits %>% column_to_rownames("X")
 colnames(credits)
 
-# przekodowanie numeric na factor i dodanie poziomow
+# przekodowanie numeric na factor i dodanie poziomów
 
 credits$Job <- factor(x = as.character(credits$Job), labels = c('unskilled and non-resident',
                                                                 'unskilled and resident',
@@ -60,7 +61,26 @@ credits$Job <- factor(x = as.character(credits$Job), labels = c('unskilled and n
                                                                 'highly skilled')
 )
 
+# dodanie nowej zmiennej bazującej na istniejących: miesięczna rata
+
+credits$Installment <- credits$Credit.amount/credits$Duration
+
+# rpart domyślnie obsluguje NA's (wykona model i predykcje) jednak bedzie to mieć wływ na wynik
+# dlatego tworzymy alternatywną ramkę danych z uzupełnionymi NA aby porównać wyniki modelowania
+
 credits_wna <- credits %>% mutate_at(c("Saving.accounts", "Checking.account"), fct_explicit_na)
 
+####### MODELOWANIE ################################################################################
 
+###### SPOSÓB 1 #### modolowanie 'manualne' z poziomu 'rpart' ######################################
 
+# dzzielenie zbioru na uczący i testowy w relacji 30/70
+
+set.seed(1234)
+ix_train <- sample(1:nrow(credits), size = 0.7 * nrow(credits))
+
+# model z domyślnymi parametrami bez zastąpionych braków danych
+
+# wyjaśnienie: 'formula', 'rpart.control'
+
+m1

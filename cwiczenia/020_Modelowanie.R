@@ -35,20 +35,35 @@ credits <- read.csv('dane/german_credit_data.csv')
 
 # Sprawdź rozmiar ramki danych (ilość obserwacji)
 
-dim(credits)
+
 
 # sprawdź typy danych w naszej ramce używając funkcji bazowej i funkcji z pakietu dplyr
 
-str(credits)
-glimpse(credits)
+
 
 # wyświetl podsumowanie ramki, użyj: summary (wybrane statystyki opisowe) i funModeling::df_status
 
-summary(credits)
-df_status(credits)
+
+#######  PREPROCESSING DANYCH  #####################################################################
 
 # zapropononuj modyfikacje, utworzenie cech lub usuniecie cech w ramce danych
 
+# przekodowanie numeric na factor i dodanie poziomow
+
+credits$Job <- factor(x = as.character(credits$Job), labels = c('unskilled and non-resident',
+                                                                'unskilled and resident',
+                                                                'skilled',
+                                                                'highly skilled')
+)
+
+# dodanie nowej zmiennej bazującej na istniejących: miesięczna rata
+
+
+
+# rpart domyślnie obsluguje NA's (wykona model i predykcje) jednak bedzie to mieć wływ na wynik
+# dlatego tworzymy alternatywną ramkę danych z uzupełnionymi NA aby porównać wyniki modelowania
+
+credits_wna <- credits %>% mutate_at(c("Saving.accounts", "Checking.account"), fct_explicit_na)
 
 
  
