@@ -325,19 +325,13 @@ df_tuned_wna <- df_tuned_wna %>%
   arrange(-auc.test.mean, auc_diff) %>%
   select(maxdepth, minbucket, auc.train.mean, auc.test.mean, auc_diff, auc.test.sd, acc.test.mean) %>%
   head(10)
-<<<<<<< HEAD
 
 # który model rekomendujesz do wdrożenia???
 
-<<<<<<< HEAD
 
-=======
-=======
 
 # który model rekomendujesz do wdrożenia???
 
->>>>>>> 481de40201848ffa00c090cb8680aaff6a613169
->>>>>>> 497b5c702f0617138a93ec7df3570dd794e8582c
 # rekomenduję model bazujący na danych z uzupełnionymi NA o parametrach maxdepth = 5, minbucket = 38
 # ze względu na relatywnie wysokie auc małą różnicę pomiędzy auc na zbiorze treningowym i testowym i
 # niskim odchyleniem standardowym auc
@@ -376,24 +370,11 @@ ConfusionMatrix(y_pred = m1_pr_tst, y_true = y_tst)
 
 (58 * -(5000*0.5)) + (122*5000*0.2)      # z tym modelem tracimy na 200 kredytach 53 tys PLN
 
-# M_finak model z uzupełnionymi brakami danych, nową cechą i po tuningu w mlr
+# M_final model z uzupełnionymi brakami danych, nową cechą i po tuningu w mlr
 
 ConfusionMatrix(y_pred = m_final_prd_tst , y_true = y_tst)
 
-<<<<<<< HEAD
 (36 * -(5000*0.5)) + (111*5000*0.2)      # zaczynamy zarabiać :)
 
-
-
-
-=======
-<<<<<<< HEAD
-(36 * -(5000*0.5)) + (111*5000*0.2)      # zaczynamy zarabiać :)
-
-
-=======
-(36 * -(5000*0.5)) + (111*5000*0.2) 
->>>>>>> 481de40201848ffa00c090cb8680aaff6a613169
->>>>>>> 497b5c702f0617138a93ec7df3570dd794e8582c
 
 
