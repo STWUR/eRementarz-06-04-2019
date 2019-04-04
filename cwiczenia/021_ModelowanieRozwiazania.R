@@ -325,9 +325,15 @@ df_tuned_wna <- df_tuned_wna %>%
   arrange(-auc.test.mean, auc_diff) %>%
   select(maxdepth, minbucket, auc.train.mean, auc.test.mean, auc_diff, auc.test.sd, acc.test.mean) %>%
   head(10)
+<<<<<<< HEAD
 
 # który model rekomendujesz do wdrożenia???
 
+=======
+
+# który model rekomendujesz do wdrożenia???
+
+>>>>>>> 481de40201848ffa00c090cb8680aaff6a613169
 # rekomenduję model bazujący na danych z uzupełnionymi NA o parametrach maxdepth = 5, minbucket = 38
 # ze względu na relatywnie wysokie auc małą różnicę pomiędzy auc na zbiorze treningowym i testowym i
 # niskim odchyleniem standardowym auc
@@ -370,8 +376,12 @@ ConfusionMatrix(y_pred = m1_pr_tst, y_true = y_tst)
 
 ConfusionMatrix(y_pred = m_final_prd_tst , y_true = y_tst)
 
+<<<<<<< HEAD
 (36 * -(5000*0.5)) + (111*5000*0.2)      # zaczynamy zarabiać :)
 
 
+=======
+(36 * -(5000*0.5)) + (111*5000*0.2) 
+>>>>>>> 481de40201848ffa00c090cb8680aaff6a613169
 
 
