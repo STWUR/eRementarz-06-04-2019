@@ -71,7 +71,7 @@ credits$Installment <- credits$Credit.amount/credits$Duration
 
 credits_wna <- credits %>% mutate_at(c("Saving.accounts", "Checking.account"), fct_explicit_na)
 
-####### MODELOWANIE z rpart ################################################################################
+####### MODELOWANIE z rpart ########################################################################
 
 ###### SPOSÓB 1 #### modolowanie 'manualne' z poziomu 'rpart' ######################################
 
@@ -138,7 +138,7 @@ y_tst <- credits[-ix_train, "Risk"]
 # tworzymy model 'bazowy' czyli symulujemy sytuacje jak wak wygladalaby sutuacja, gdybysmy dzialali bez modelu
 
 m0_pr <- factor(rep("good", times = 1000), levels = c('good', 'bad'))
-ConfusionMatrix(m0_pr, y_true = credits[,"Risk"])
+ConfusionMatrix(y_pred =m0_pr, y_true = credits[,"Risk"])
 Accuracy(m0_pr, y_true = credits[,"Risk"])
 
 # okazuje się, że przy takim stanie, klasyfikując wszystkich jako dobrych uzyskujemy 70% trafności
@@ -281,7 +281,8 @@ res <- tuneParams(learner = tree,
                   control = ctrl,
                   measures = list(auc, 
                                   auc.train = setAggregation(auc, train.mean),
-                                  auc.test.sd = setAggregation(auc, test.sd))
+                                  auc.test.sd = setAggregation(auc, test.sd),
+                                  acc)
 )
 
 res_wna <- tuneParams(learner = tree,
@@ -291,7 +292,8 @@ res_wna <- tuneParams(learner = tree,
                       control = ctrl,
                       measures = list(auc, 
                                       auc.train = setAggregation(auc, train.mean),
-                                      auc.test.sd = setAggregation(auc, test.sd))
+                                      auc.test.sd = setAggregation(auc, test.sd),
+                                      acc)
 )
 
 # and the winner is !!!!
@@ -301,19 +303,34 @@ res_wna
 
 # wyniki tuningu
 
-df_tuned <- generateHyperParsEffectData(res_wna,partial.dep = TRUE)$data
+df_tuned <- generateHyperParsEffectData(res, partial.dep = TRUE)$data
 
-df_tuned <- df_tuned %>%
-  mutate(auc_diff = auc.train.mean - auc.test.mean) %>%
-  arrange(-auc.test.mean, auc_diff) %>%
-  select(maxdepth, minbucket, auc.train.mean, auc.test.mean, auc_diff, auc.test.sd) %>%
-  head(10)
+# sprawdź wyniki tuningu dla modelu z uzupełnionymi NA i zapisz do zmiennej 'df_tuned_wna'
+
+df_tuned_wna <- generateHyperParsEffectData(res_wna, partial.dep = TRUE)$data
 
 # decyzja którą kombinacje parametrów wybrać należy do analityka i zawsze oprócz performance
 # powinna także brać pod uwagę inne czynniki takie jest zrozumiałość biznesowa modelu, jego stabilność etc...
 
-# rekomenduję model o parametrach maxdepth = 5, minbucket = 38 ze względu na relatywnie wysokie auc
-# małą różnicę pomiędzy auc na zbiorze treningowym i testowym i niskiem odchyleniem standardowym auc
+# rangowanie wyników tuningu
+df_tuned <- df_tuned %>%
+  mutate(auc_diff = auc.train.mean - auc.test.mean) %>%
+  arrange(-auc.test.mean, auc_diff) %>%
+  select(maxdepth, minbucket, auc.train.mean, auc.test.mean, auc_diff, auc.test.sd, acc.test.mean) %>%
+  head(10)
+
+# wykonaj analogiczny ranking dla modeli z uzupełnionymi NA i zapisz do zmiennej 'df_tuned_wna'
+df_tuned_wna <- df_tuned_wna %>%
+  mutate(auc_diff = auc.train.mean - auc.test.mean) %>%
+  arrange(-auc.test.mean, auc_diff) %>%
+  select(maxdepth, minbucket, auc.train.mean, auc.test.mean, auc_diff, auc.test.sd, acc.test.mean) %>%
+  head(10)
+
+# który model rekomendujesz do wdrożenia???
+
+# rekomenduję model bazujący na danych z uzupełnionymi NA o parametrach maxdepth = 5, minbucket = 38
+# ze względu na relatywnie wysokie auc małą różnicę pomiędzy auc na zbiorze treningowym i testowym i
+# niskim odchyleniem standardowym auc
 
 #### OSTATECZNY MODEL ##############################################################################
 
@@ -324,4 +341,37 @@ tree_final <- makeLearner('classif.rpart',
 
 m_final <-train(learner = tree_final,task = task_wna, subset = ix_train)
 m_final <- getLearnerModel(m_final)
-rpart.plot(m_final)
+rpart.plot(m_final, roundint = FALSE)
+
+m_final_prd_tst <- predict(m_final, newdata = credits_wna[-ix_train,], type = 'class')
+
+#### SYMULACJA WYNIKU BIZNESOWEGO ##################################################################
+
+# Założenia
+# średni kwota udzielonego kredytu 5000 PLN
+# marża na spłaconym kredycie 15% 
+# strata nie niespłaconym kredycie 50%
+
+# symulujemy na zbiorze testowym
+
+# M0 sytuacja bez modelu - udzielamy wszytskim
+
+ConfusionMatrix(y_pred =m0_pr[-ix_train], y_true = credits[-ix_train,"Risk"])
+
+(68* -(5000 * 0.5)) + (132 * 5000 * 0.2)  # bez modelu tracimy na 200 kredytach 71 tys PLN
+
+# M1 model bez uzupełnionych braków danych z domyślnymi parametrami rpart
+
+ConfusionMatrix(y_pred = m1_pr_tst, y_true = y_tst)
+
+(58 * -(5000*0.5)) + (122*5000*0.2)      # z tym modelem tracimy na 200 kredytach 53 tys PLN
+
+# M_finak model z uzupełnionymi brakami danych, nową cechą i po tuningu w mlr
+
+ConfusionMatrix(y_pred = m_final_prd_tst , y_true = y_tst)
+
+(36 * -(5000*0.5)) + (111*5000*0.2)      # zaczynamy zarabiać :)
+
+
+
+
