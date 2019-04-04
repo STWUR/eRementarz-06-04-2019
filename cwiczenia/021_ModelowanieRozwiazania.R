@@ -71,7 +71,7 @@ credits$Installment <- credits$Credit.amount/credits$Duration
 
 credits_wna <- credits %>% mutate_at(c("Saving.accounts", "Checking.account"), fct_explicit_na)
 
-####### MODELOWANIE ################################################################################
+####### MODELOWANIE z rpart ################################################################################
 
 ###### SPOSÓB 1 #### modolowanie 'manualne' z poziomu 'rpart' ######################################
 
@@ -212,14 +212,116 @@ df_performance
 # większy (strata kapitału) niż nie udzielenia 'dobremu' - brak zysku z marży
 # wybór najlepszego modelu pod kątem biznesowym omówimy w modelowaniu przy użyciu 'mlr'
 
-####### MODELOWANIE ################################################################################
+####### MODELOWANIE z mlr ##########################################################################
 
 ###### SPOSÓB 2 #### modolowanie 'manualne' i 'automatyczne' #######################################
 
-task <- makeClassifTask(data = credits_wna, target = 'Risk', positive = 'bad')
+task <- makeClassifTask(data = credits, target = 'Risk', positive = 'bad')
+task_wna <- makeClassifTask(data = credits_wna, target = 'Risk', positive = 'bad')
 
 tree <-makeLearner('classif.rpart', predict.type = 'prob')
 
-tree_desc <- makeResampleDesc('Holdout', split = 0.8, stratify = TRUE, predict = 'both')
+m1_mlr <-train(learner = tree, task = task, subset = ix_train)    # trenowanie modelu
 
-tree_res <- resample(tree,task,tree_desc, measures = list(setAggregation(acc, train.mean, test.mean)))
+##### PREDYKCJA I OCENA ############################################################################
+
+m1_pr_tr_mlr <- predict(m1_mlr, newdata = credits[ix_train,])     #predykcja na zbiorze treningowym
+m1_pr_tst_mlr <- predict(m1_mlr, newdata = credits[-ix_train,])   #predyckja na zbiorze testowym
+
+performance(m1_pr_tr_mlr, acc)                                    # trafność na zbiorze treningowym
+performance(m1_pr_tst_mlr, acc)                                   # trafność na zbiorze testowym
+
+df_performance                                                    # wyniki identyczne jak w spo
+
+# pobieramy obiekt modelu z mlr do obektu klasy 'rpart' w cely jego wizualicaji
+
+m1_mlr <- getLearnerModel(m1_mlr)
+
+# porównujemy drzewa graficznie. Wywołaj 'rpart.plot()' na obiekcie 'm1' i 'm1_mlr'
+
+rpart.plot(m1)
+rpart.plot(m1_mlr)
+
+##### MODELOWANIE Z mlr. STROJENIE MODELI ##########################################################
+
+# określenie strategii resamplingu. 5 krotna cross-walidacja
+
+tree_desc <- makeResampleDesc('CV', iters = 5, stratify = TRUE, predict = 'both')
+
+# ewalucja modelu m1
+
+tree_res <- resample(learner = tree,
+                     task = task,
+                     resampling = tree_desc,
+                     measures = list(acc, acc.train = setAggregation(acc, train.mean))
+)
+
+# ewaluacja modelu z różnnymi parametrami
+
+
+# wybiramy parametry, które chcemy zmieniać
+
+ps <- makeParamSet(makeIntegerParam('maxdepth', lower = 2, upper = 7),
+                   makeIntegerParam('minbucket', lower = 20, upper = 100),
+                   makeDiscreteParam('cp',values = 0.00001))
+
+# definiujemy liczbę iteracli i sposób przeszukiwania przestrzeni parametrów
+
+ctrl <- makeTuneControlRandom(maxit = 50)
+
+
+# let's tune! 
+
+set.seed(1234)
+
+res <- tuneParams(learner = tree,
+                  task = task,
+                  resampling = tree_desc,
+                  par.set = ps,
+                  control = ctrl,
+                  measures = list(auc, 
+                                  auc.train = setAggregation(auc, train.mean),
+                                  auc.test.sd = setAggregation(auc, test.sd))
+)
+
+res_wna <- tuneParams(learner = tree,
+                      task = task_wna,
+                      resampling = tree_desc,
+                      par.set = ps,
+                      control = ctrl,
+                      measures = list(auc, 
+                                      auc.train = setAggregation(auc, train.mean),
+                                      auc.test.sd = setAggregation(auc, test.sd))
+)
+
+# and the winner is !!!!
+
+res
+res_wna
+
+# wyniki tuningu
+
+df_tuned <- generateHyperParsEffectData(res_wna,partial.dep = TRUE)$data
+
+df_tuned <- df_tuned %>%
+  mutate(auc_diff = auc.train.mean - auc.test.mean) %>%
+  arrange(-auc.test.mean, auc_diff) %>%
+  select(maxdepth, minbucket, auc.train.mean, auc.test.mean, auc_diff, auc.test.sd) %>%
+  head(10)
+
+# decyzja którą kombinacje parametrów wybrać należy do analityka i zawsze oprócz performance
+# powinna także brać pod uwagę inne czynniki takie jest zrozumiałość biznesowa modelu, jego stabilność etc...
+
+# rekomenduję model o parametrach maxdepth = 5, minbucket = 38 ze względu na relatywnie wysokie auc
+# małą różnicę pomiędzy auc na zbiorze treningowym i testowym i niskiem odchyleniem standardowym auc
+
+#### OSTATECZNY MODEL ##############################################################################
+
+tree_final <- makeLearner('classif.rpart',
+                          predict.type = 'prob',
+                          par.vals = list(cp = 0.00001, maxdepth = 5, minbucket = 38)
+                          )
+
+m_final <-train(learner = tree_final,task = task_wna, subset = ix_train)
+m_final <- getLearnerModel(m_final)
+rpart.plot(m_final)
