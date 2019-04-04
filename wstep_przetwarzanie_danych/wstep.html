@@ -201,23 +201,17 @@ head(data)</pre>
 
 </article></slide><slide class=""><hgroup><h2>Przekodowane?</h2></hgroup><article  id="przekodowane">
 
-<pre class = 'prettyprint lang-r'>data$Job &lt;- factor(x = as.character(data$Job), labels = c(&#39;unskilled and non-resident&#39;, &#39;unskilled and resident&#39;, &#39;skilled&#39;,&#39;highly skilled&#39;))
-head(data)</pre>
+<pre class = 'prettyprint lang-r'>data2&lt;-data
+data2$Job &lt;- factor(x = as.character(data$Job), 
+                   labels = 
+                     c(&#39;unskilled and non-resident&#39;, 
+                       &#39;unskilled and resident&#39;,
+                       &#39;skilled&#39;,&#39;highly skilled&#39;))
+head(data2$Job)</pre>
 
-<pre >##   X Age    Sex                    Job Housing Saving.accounts
-## 1 0  67   male                skilled     own            &lt;NA&gt;
-## 2 1  22 female                skilled     own          little
-## 3 2  49   male unskilled and resident     own          little
-## 4 3  45   male                skilled    free          little
-## 5 4  53   male                skilled    free          little
-## 6 5  35   male unskilled and resident    free            &lt;NA&gt;
-##   Checking.account Credit.amount Duration             Purpose Risk
-## 1           little          1169        6            radio/TV good
-## 2         moderate          5951       48            radio/TV  bad
-## 3             &lt;NA&gt;          2096       12           education good
-## 4           little          7882       42 furniture/equipment good
-## 5           little          4870       24                 car  bad
-## 6             &lt;NA&gt;          9055       36           education good</pre>
+<pre >## [1] skilled                skilled                unskilled and resident
+## [4] skilled                skilled                unskilled and resident
+## 4 Levels: unskilled and non-resident unskilled and resident ... highly skilled</pre>
 
 </article></slide><slide class=""><hgroup><h2>Ćwiczenie 1</h2></hgroup><article  id="cwiczenie-1">
 
@@ -227,28 +221,15 @@ head(data)</pre>
 
 </article></slide><slide class=""><hgroup><h2>Przykład rozwiązania</h2></hgroup><article  id="przykad-rozwiazania">
 
-<pre class = 'prettyprint lang-r'>data$Risk&lt;-as.numeric(x=data$Risk,labels=c(0,1))
-head(data)</pre>
+<pre class = 'prettyprint lang-r'>data2$Risk&lt;-as.numeric(x=data$Risk,labels=c(1,2))
+head(data2$Risk)#1-bad, 2-good</pre>
 
-<pre >##   X Age    Sex                    Job Housing Saving.accounts
-## 1 0  67   male                skilled     own            &lt;NA&gt;
-## 2 1  22 female                skilled     own          little
-## 3 2  49   male unskilled and resident     own          little
-## 4 3  45   male                skilled    free          little
-## 5 4  53   male                skilled    free          little
-## 6 5  35   male unskilled and resident    free            &lt;NA&gt;
-##   Checking.account Credit.amount Duration             Purpose Risk
-## 1           little          1169        6            radio/TV    2
-## 2         moderate          5951       48            radio/TV    1
-## 3             &lt;NA&gt;          2096       12           education    2
-## 4           little          7882       42 furniture/equipment    2
-## 5           little          4870       24                 car    1
-## 6             &lt;NA&gt;          9055       36           education    2</pre>
+<pre >## [1] 2 1 2 2 1 2</pre>
 
 </article></slide><slide class=""><hgroup><h2>Obiekty</h2></hgroup><article  id="obiekty-1">
 
 <pre class = 'prettyprint lang-r'># podsumowanie tabeli
-summary(data)</pre>
+summary(data2)</pre>
 
 <pre >##        X              Age            Sex     
 ##  Min.   :  0.0   Min.   :19.00   female:310  
@@ -320,7 +301,7 @@ library(funModeling)</pre>
 
 </article></slide><slide class=""><hgroup><h2></h2></hgroup><article  id="section-3">
 
-<pre class = 'prettyprint lang-r'>funModeling::df_status(data)</pre>
+<pre class = 'prettyprint lang-r'>funModeling::df_status(data2)</pre>
 
 <pre >##            variable q_zeros p_zeros q_na p_na q_inf p_inf    type unique
 ## 1                 X       1     0.1    0  0.0     0     0 integer   1000
@@ -376,20 +357,24 @@ head(is.na(data))</pre>
 <p><strong>SQL</strong>? Warto spróbować!</p>
 
 <pre class = 'prettyprint lang-r'>library(sqldf)
-zapytanie1&lt;-&quot;select Age, Sex, Risk from data order by Age desc limit 5&quot; 
+zapytanie1&lt;-&quot;select Age, Sex, Risk 
+from data2 
+order by Age desc 
+limit 5&quot; 
 sqldf(zapytanie1)</pre>
 
 <pre >##   Age    Sex Risk
-## 1  75   male    2
-## 2  75 female    2
-## 3  74 female    1
-## 4  74   male    2
-## 5  74   male    2</pre>
+## 1  75   male good
+## 2  74 female  bad
+## 3  74   male good
+## 4  70   male good
+## 5  68   male good</pre>
 
 </article></slide><slide class=""><hgroup><h2>Wczytywanie konkretnych wyników</h2></hgroup><article  id="wczytywanie-konkretnych-wynikow">
 
 <pre class = 'prettyprint lang-r'>zapytanie0&lt;-read.csv.sql(&quot;dane/german_credit_data.csv&quot;,
-sql = &quot;select Age, Sex, Risk from file order by Age desc limit 5&quot;) 
+sql = &quot;select Age, Sex, Risk 
+from file order by Age desc limit 5&quot;) 
 print(zapytanie0)</pre>
 
 <pre >##   Age    Sex Risk
@@ -398,6 +383,39 @@ print(zapytanie0)</pre>
 ## 3  74 female  bad
 ## 4  74   male good
 ## 5  74   male good</pre>
+
+</article></slide><slide class=""><hgroup><h2>Przykładowe agregacje</h2></hgroup><article  id="przykadowe-agregacje">
+
+<p>Średni wiek ,,złych&#39;&#39; mężczyzn&#8230;</p>
+
+<pre class = 'prettyprint lang-r'>zapytanie2 = &quot;select avg(Age) as sredni_wiek from data2 where Sex=&#39;male&#39; and Risk=1&quot; 
+sqldf(zapytanie2)</pre>
+
+<pre >##   sredni_wiek
+## 1          NA</pre>
+
+</article></slide><slide class=""><hgroup><h2>Ćwiczenie 2</h2></hgroup><article  id="cwiczenie-2">
+
+<p>Podaj średnią kwotę kredytu w markach niemieckich dla kobiet, które są ,,dobrymi klientami&#39;&#39;.</p>
+
+<pre class = 'prettyprint lang-r'>zapytanie3 = &#39;select avg(&quot;Credit.amount&quot;) as [Kwota kredytu] from data2 where Sex=&quot;female&quot; and Risk=2&#39;
+sqldf(zapytanie3)</pre>
+
+<pre >##   Kwota kredytu
+## 1            NA</pre>
+
+</article></slide><slide class=""><hgroup><h2>Gruopowanie</h2></hgroup><article  id="gruopowanie">
+
+<p>Połączenie poprzednich ćwiczeń:</p>
+
+<pre class = 'prettyprint lang-r'>zapytanie4 = &#39;select Sex,Risk, avg(Age) as [Wiek], avg(&quot;Credit.amount&quot;) as [Kwota kredytu] from data2 group by Sex,Risk&#39;
+sqldf(zapytanie4)</pre>
+
+<pre >##      Sex Risk     Wiek Kwota kredytu
+## 1 female  bad 30.51220      3431.573
+## 2 female good 34.82558      2465.826
+## 3   male  bad 36.14765      4128.477
+## 4   male good 35.75122      2941.034</pre>
 
 </article></slide><slide class=""><hgroup><h2>Pakiet dplyr</h2></hgroup><article  id="pakiet-dplyr">
 
