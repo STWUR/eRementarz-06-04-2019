@@ -16,8 +16,7 @@ Do **R** można wczytywać dane na wiele sposobów, my skorzystamy z funkcji **r
 Najpierw warto sprawdzić jaki katalog jest ,,domyślny'' i w razie potrzeby zmienić go na inny za pomocą funkcji **setwd()**.
 
 ```{r}
-getwd()
-data <- read.csv("data/german_credit_data.csv", 
+data <- read.csv("dane/german_credit_data.csv", 
                        encoding = "UTF-8")
 ```
 
@@ -31,10 +30,16 @@ Do zmiennej *data* przypisaliśmy wynik funkcji *read.csv*.
 dim(data)
 
 # pierwsze wiersze z tabeli
+##data[1:4,1:11]
 head(data)
 ```
 
+
+
 ## Co to za dane?
+<img src="german.png" width="800">
+
+##
 **German credit data** dotyczą klientów banku i oceny ich zdolności kredytowej. Występujące zmienne:
 
 - X - liczba porządkowa,
@@ -53,6 +58,29 @@ head(data)
 <img src="kaggle.png" width="800">
 
 
+## Czy typy się zgadzają?
+```{r}
+sapply(data, class)
+```
+
+##Przekodowane?
+```{r}
+data$Job <- factor(x = as.character(data$Job), labels = c('unskilled and non-resident', 'unskilled and resident', 'skilled','highly skilled'))
+head(data)
+```
+
+## Ćwiczenie 1
+Zapropononuj inne modyfikacje, utworzenie cech lub usuniecie cech w ramce danych. Można np. użyć funkcji **as.numeric**, żeby przekonwertować tekst na wartości liczbowe.
+
+<img src="cwiczenie1.jpg" width="800">
+
+
+## Przykład rozwiązania
+```{r}
+data$Risk<-as.numeric(x=data$Risk,labels=c(1,2))
+head(data$Risk)#1-bad, 2-good
+```
+
 
 ## Obiekty
 
@@ -60,6 +88,19 @@ head(data)
 # podsumowanie tabeli
 summary(data)
 ```
+
+
+## 
+Zwykle można zrobić to też inaczej:
+```{r}
+# podsumowanie tabeli
+library(funModeling)
+```
+##
+```{r}
+funModeling::df_status(data)
+```
+
 
 ##Interfejs w RStudio 
 
@@ -70,15 +111,17 @@ summary(data)
 Przy niedużych zbiorach danych możemy w łatwy sposób poznać strukturę:
 <img src="img2.png" width="800">
 
+
 ##Podstawowe zależności
 ```{r, message=FALSE, warning = FALSE}
 pairs(data[,c(1,8,9)])
 ```
 
 ##Braki w danych, poprawność
-Istnieje wiele podejść do tego tematu, np. zastąpienie konkretną wartością, zastąpienie jakąś z agregacji, pominięcie rekordów lub skorzystanie z predykcji.
+Istnieje wiele podejść do tego tematu, np. zastąpienie konkretną wartością, zastąpienie jakąś z agregacji, pominięcie rekordów lub skorzystanie z predykcji. Istnieją pakiety do obróbki brakujących danych, np. **mitools.**
 ```{r, message=FALSE, warning = FALSE}
-data<-na.omit(data)
+data2<-na.omit(data)
+head(is.na(data))
 ```
 
 
@@ -91,10 +134,12 @@ sqldf(zapytanie1)
 ```
 ##Wczytywanie konkretnych wyników
 ```{r, message=FALSE, warning = FALSE}
-zapytanie0<-read.csv.sql("data/german_credit_data.csv",
+zapytanie0<-read.csv.sql("dane/german_credit_data.csv",
 sql = "select Age, Sex, Risk from file order by Age desc limit 5") 
 print(zapytanie0)
 ```
+
+
 
 ##Pakiet dplyr
 Jeden z popularniejszyh pakietów do przetwarzania danych.
