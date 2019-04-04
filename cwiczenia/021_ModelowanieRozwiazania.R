@@ -128,10 +128,20 @@ m4 <- rpart(formula = Risk ~.,
 
 rpart.plot(m4)
 
+####### PREDYKCJA i OCENA ##########################################################################
+
 # predykcja modeli na zbiorach uczących i testowych, porównanie wyników
 
 y_tr <- credits[ix_train, "Risk"]
 y_tst <- credits[-ix_train, "Risk"]
+
+# tworzymy model 'bazowy' czyli symulujemy sytuacje jak wak wygladalaby sutuacja, gdybysmy dzialali bez modelu
+
+m0_pr <- factor(rep("good", times = 1000), levels = c('good', 'bad'))
+ConfusionMatrix(m0_pr, y_true = credits[,"Risk"])
+Accuracy(m0_pr, y_true = credits[,"Risk"])
+
+# okazuje się, że przy takim stanie, klasyfikując wszystkich jako dobrych uzyskujemy 70% trafności
 
 m1_pr_tr <- predict(object = m1, newdata = credits[ix_train,], type = "class")
 m1_pr_tst <- predict(object = m1,  newdata = credits[-ix_train,], type = "class")
@@ -146,10 +156,6 @@ m4_pr_tr <- predict(object = m4, newdata = credits_wna[ix_train,], type = "class
 m4_pr_tst <- predict(object = m4, newdata = credits_wna[-ix_train,], type = "class")
 
 # macierz pomyłek i trafność 
-
-# tworzymy pustą ramkę danych do zapisu wyników modelowania
-
-
 
 # obliczamy trafność każdego modelu na zbiorze treningowym i testowym i zapisujemy do ramki danych
 
@@ -198,7 +204,22 @@ ConfusionMatrix(y_pred = m4_pr_tst, y_true = y_tst)
 acc_tst_m4 <- Accuracy(y_pred = m4_pr_tst, y_true = y_tst)
 
 df_performance <- rbind.data.frame(df_performance,list('m4', acc_tr_m4, acc_tst_m4))
+df_performance
 
+# zauważmy, że niektóre modele uzyskują gorzą jakość mierzoną 'accuracy' niż w przypadku 'modelu bazowego'
+# czy to znaczy, że faktycznie są gorsze?
+# NIE ! - accoracy nie jest dobrą miarą, zauważmy, że koszt udzielenia kredytu 'złemu' klientowi jest
+# większy (strata kapitału) niż nie udzielenia 'dobremu' - brak zysku z marży
+# wybór najlepszego modelu pod kątem biznesowym omówimy w modelowaniu przy użyciu 'mlr'
 
+####### MODELOWANIE ################################################################################
 
+###### SPOSÓB 2 #### modolowanie 'manualne' i 'automatyczne' #######################################
 
+task <- makeClassifTask(data = credits_wna, target = 'Risk', positive = 'bad')
+
+tree <-makeLearner('classif.rpart', predict.type = 'prob')
+
+tree_desc <- makeResampleDesc('Holdout', split = 0.8, stratify = TRUE, predict = 'both')
+
+tree_res <- resample(tree,task,tree_desc, measures = list(setAggregation(acc, train.mean, test.mean)))
