@@ -8,6 +8,9 @@ output:
   slidy_presentation: default
   beamer_presentation: default
 ---
+## Zaczynamy  
+<img src="GIT.png" width="800">
+
 
 ## Wczytanie danych
 
@@ -34,6 +37,17 @@ dim(data)
 head(data)
 ```
 
+##Interfejs w RStudio 
+
+<img src="img1.png" width="800">
+
+
+##Przeglądanie danych
+Przy niedużych zbiorach danych możemy w łatwy sposób poznać strukturę:
+<img src="img2.png" width="800">
+
+
+
 
 
 ## Co to za dane?
@@ -57,6 +71,12 @@ head(data)
 
 <img src="kaggle.png" width="800">
 
+## Zapoznajemy się z danymi...
+Jakie pytania warto sobie zadać?
+```{r}
+levels(data$Purpose)
+```
+
 
 ## Czy typy się zgadzają?
 ```{r}
@@ -75,7 +95,7 @@ head(data2$Job)
 ```
 
 ## Ćwiczenie 1
-Zapropononuj inne modyfikacje, utworzenie cech lub usuniecie cech w ramce danych. Można np. użyć funkcji **as.numeric**, żeby przekonwertować tekst na wartości liczbowe.
+Zapropononuj inne modyfikacje. Można np. użyć funkcji **as.numeric**, żeby przekonwertować tekst na wartości liczbowe.
 
 <img src="cwiczenie1.jpg" width="800">
 
@@ -85,6 +105,7 @@ Zapropononuj inne modyfikacje, utworzenie cech lub usuniecie cech w ramce danych
 data2$Risk<-as.numeric(x=data$Risk,labels=c(1,2))
 head(data2$Risk)#1-bad, 2-good
 ```
+<img src="rozw1.jpg" width="600">
 
 
 ## Obiekty
@@ -97,24 +118,12 @@ summary(data2)
 
 ## 
 Zwykle można zrobić to też inaczej:
-```{r}
+```{r, message=FALSE, warning = FALSE}
 # podsumowanie tabeli
 library(funModeling)
-```
-##
-```{r}
 funModeling::df_status(data2)
 ```
 
-
-##Interfejs w RStudio 
-
-<img src="img1.png" width="800">
-
-
-##Przeglądanie danych
-Przy niedużych zbiorach danych możemy w łatwy sposób poznać strukturę:
-<img src="img2.png" width="800">
 
 
 ##Podstawowe zależności
@@ -125,12 +134,12 @@ pairs(data[,c(1,8,9)])
 ##Braki w danych, poprawność
 Istnieje wiele podejść do tego tematu, np. zastąpienie konkretną wartością, zastąpienie jakąś z agregacji, pominięcie rekordów lub skorzystanie z predykcji. Istnieją pakiety do obróbki brakujących danych, np. **mitools.**
 ```{r, message=FALSE, warning = FALSE}
-data2<-na.omit(data)
-head(is.na(data))
+data2<-na.omit(data2)
+head(is.na(data2))
 ```
 
 
-##Przeglądanie większych zbiorów danych
+##Przeglądanie większych zbiorów
 **SQL**? Warto spróbować!
 ```{r, message=FALSE, warning = FALSE}
 library(sqldf)
@@ -150,26 +159,106 @@ print(zapytanie0)
 ##Przykładowe agregacje
 Średni wiek ,,złych'' mężczyzn...
 ```{r, message=FALSE, warning = FALSE}
-zapytanie2 = "select avg(Age) as sredni_wiek from data2 where Sex='male' and Risk=1" 
+zapytanie2 = "select avg(Age) as sredni_wiek 
+from data2 WHERE Sex='male' and Risk=1"
 sqldf(zapytanie2)
 ```
-##Ćwiczenie 2
-Podaj średnią  kwotę kredytu w markach niemieckich dla kobiet, które są ,,dobrymi klientami''.
+
+*Ćwiczenie 2*: Podaj średnią  kwotę kredytu w markach niemieckich dla kobiet, które są ,,dobrymi'' klientami.
+
+## Przykład rozwiązania
+
 ```{r}
-zapytanie3 = 'select avg("Credit.amount") as [Kwota kredytu] from data2 where Sex="female" and Risk=2'
+zapytanie3 = 'select avg("Credit.amount") as [Kwota kredytu] 
+from data2 where Sex="female" and Risk=2'
 sqldf(zapytanie3)
 ```
 
-##Gruopowanie
+## Grupowanie
 Połączenie poprzednich ćwiczeń:
 ```{r}
-zapytanie4 = 'select Sex,Risk, avg(Age) as [Wiek], avg("Credit.amount") as [Kwota kredytu] from data2 group by Sex,Risk'
+zapytanie4 = 'select Sex,Risk, 
+avg(Age) as [Wiek], 
+avg("Credit.amount") as [Kwota kredytu]
+from data2 group by Sex,Risk'
 sqldf(zapytanie4)
 ```
 
 
-##Pakiet dplyr
-Jeden z popularniejszyh pakietów do przetwarzania danych.
+## Pakiet dplyr
+Jeden z popularniejszych pakietów do przetwarzania danych. Kluczowe fragmenty zaimplementowane w **Rcpp**.
 ```{r, message=FALSE, warning = FALSE}
 library(dplyr)
+select(data2,Age,Sex,Risk)
 ```
+
+
+## Konstrukcja chain
+Operacja z łącznikiem %>% pozwala unikać zagnieżdżania. Możemy napisać alterntywną wersję dla zapytania **sqldf**.
+```{r, message=FALSE, warning = FALSE}
+data2 %>%
+select(Age,Sex,Risk) %>%
+arrange(Age) %>%
+top_n(5)  
+```
+
+## Agregacje nieco inaczej
+Średni wiek ,,złych'' mężczyzn...
+
+```{r}
+data2 %>%
+  filter (Sex=='male', Risk==1) %>%
+  summarise(sredni_wiek=mean(Age)) 
+```
+
+
+*Ćwiczenie 3*: Podaj średnią  kwotę kredytu w markach niemieckich dla kobiet, które są ,,dobrymi'' klientami.
+
+## Przykład rozwiązania
+```{r}
+data2 %>%
+  filter (Sex=='female', Risk==2) %>%
+  summarise(sredni_wiek=mean(Credit.amount)) 
+```
+## Grupowanie
+Do grupowania służy funkcja *group_by*.
+
+*Ćwiczenie 4*: Z użyciem *dplyr* wyświetl jaki jest średni wiek i kwota kredytu dla pogrupowanych płci i grup klientów (,,dobry''/,,zły'').
+
+## Przykładowe rozwiązanie
+```{r}
+pogrupowane<-data2 %>%
+  group_by (Sex,Risk) %>%
+  summarise(srednia_kwota_kredyt=mean(Credit.amount),sredni_wiek=mean(Age))
+
+pogrupowane
+```
+
+## Może któreś kolumny są niepotrzebne?
+```{r}
+data3 <- data2[,-1]
+names(data3)
+```
+*Ćwiczenie 5 *:
+Może warto jakąś kolumnę dodać? Pomysły? W jaki sposób?
+
+
+## Przykład rozwiązania
+Pierwsze co się nasuwa, to wyliczenie raty.
+```{r}
+#podejście standardowe
+data3$Installment <- data3$Credit.amount/data3$Duration
+#lub wykorzystanie dplyr
+data2<-data2 %>%
+  mutate(Installment=Credit.amount/Duration)
+```
+
+## Zadania dodatkowe (**sqldf/dyplr**)
+Pogrupować ludzi ze względu na stopień wykwalifikowania 
+i rodzaj mieszkania (jednocześnie), sprawdzić w każdej grupie jaki jest stosunek klientów ,,dobrych'' do wszystkich.
+
+Na podstawie konta oszczędościowego/obligacji (**Saving accounts**) utworzyć nową zmienną jakościową. Sprawdzić w każdej grupie jaki jest stosunek klientów ,,dobrych'' do wszystkich. Czy stosunek ten 
+w istotny sposób zależy od tego, jak dobierzemy zmienne jakościowe (szerokości przedziałów)?
+
+
+
