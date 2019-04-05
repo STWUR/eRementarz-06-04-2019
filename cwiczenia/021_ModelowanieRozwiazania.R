@@ -107,7 +107,8 @@ m3 <- rpart(formula = Risk ~.,
             data = credits,
             subset = ix_train,
             control = rpart.control(
-              cp = 0.00001
+              cp = 0.00001,
+              maxdepth = 5
             )
 )
 
@@ -117,16 +118,16 @@ rpart.plot(m3)
 # model 4 z zastąonionymi barakmi danych i zmienionymi wybranymi parametrem  cp = 0.00001
 # i zmienonymi dowolnie przez Ciebie wybranym(i) z nastpujmących: maxdepth, minbucket, minsplit
 
-m4 <- rpart(formula = Risk ~.,
-            data = credits_wna,
-            subset = ix_train,
-            control = rpart.control(
-              cp = 0.00001,
-              maxdepth = 5
-            )
-)
-
-rpart.plot(m4)
+# m4 <- rpart(formula = Risk ~.,
+#             data = credits_wna,
+#             subset = ix_train,
+#             control = rpart.control(
+#               cp = 0.00001,
+#               maxdepth = 5
+#             )
+# )
+# 
+# rpart.plot(m4)
 
 ####### PREDYKCJA i OCENA ##########################################################################
 
@@ -152,8 +153,8 @@ m2_pr_tst <- predict(object = m2, newdata = credits_wna[-ix_train,], type = "cla
 m3_pr_tr <- predict(object = m3, newdata = credits[ix_train,], type = "class")
 m3_pr_tst <- predict(object = m3, newdata = credits[-ix_train,], type = "class")
 
-m4_pr_tr <- predict(object = m4, newdata = credits_wna[ix_train,], type = "class")
-m4_pr_tst <- predict(object = m4, newdata = credits_wna[-ix_train,], type = "class")
+# m4_pr_tr <- predict(object = m4, newdata = credits_wna[ix_train,], type = "class")
+# m4_pr_tst <- predict(object = m4, newdata = credits_wna[-ix_train,], type = "class")
 
 # macierz pomyłek i trafność 
 
@@ -195,16 +196,16 @@ acc_tst_m3 <- Accuracy(y_pred = m3_pr_tst, y_true = y_tst)
 df_performance <- rbind.data.frame(df_performance,list('m3', acc_tr_m3, acc_tst_m3))
 
 #M4
-# zbiór treningowy
-ConfusionMatrix(y_pred = m4_pr_tr, y_true = y_tr)
-acc_tr_m4 <- Accuracy(y_pred = m4_pr_tr, y_true = y_tr)
-
-# zbiór testowy
-ConfusionMatrix(y_pred = m4_pr_tst, y_true = y_tst)
-acc_tst_m4 <- Accuracy(y_pred = m4_pr_tst, y_true = y_tst)
-
-df_performance <- rbind.data.frame(df_performance,list('m4', acc_tr_m4, acc_tst_m4))
-df_performance
+# # zbiór treningowy
+# ConfusionMatrix(y_pred = m4_pr_tr, y_true = y_tr)
+# acc_tr_m4 <- Accuracy(y_pred = m4_pr_tr, y_true = y_tr)
+# 
+# # zbiór testowy
+# ConfusionMatrix(y_pred = m4_pr_tst, y_true = y_tst)
+# acc_tst_m4 <- Accuracy(y_pred = m4_pr_tst, y_true = y_tst)
+# 
+# df_performance <- rbind.data.frame(df_performance,list('m4', acc_tr_m4, acc_tst_m4))
+# df_performance
 
 # zauważmy, że niektóre modele uzyskują gorzą jakość mierzoną 'accuracy' niż w przypadku 'modelu bazowego'
 # czy to znaczy, że faktycznie są gorsze?
@@ -240,7 +241,7 @@ m1_mlr <- getLearnerModel(m1_mlr)
 # porównujemy drzewa graficznie. Wywołaj 'rpart.plot()' na obiekcie 'm1' i 'm1_mlr'
 
 rpart.plot(m1)
-rpart.plot(m1_mlr)
+rpart.plot(m1_mlr, roundint = FALSE)
 
 ##### MODELOWANIE Z mlr. STROJENIE MODELI ##########################################################
 
@@ -263,7 +264,8 @@ tree_res <- resample(learner = tree,
 
 ps <- makeParamSet(makeIntegerParam('maxdepth', lower = 2, upper = 7),
                    makeIntegerParam('minbucket', lower = 20, upper = 100),
-                   makeDiscreteParam('cp',values = 0.00001))
+                   makeDiscreteParam('cp',values = 0.00001))              # ustawiamy celowo, bo wartosc domyslna
+                                                                          # cp=0.01 bardzo szybko przytnie drzewo
 
 # definiujemy liczbę iteracli i sposób przeszukiwania przestrzeni parametrów
 
@@ -329,10 +331,7 @@ df_tuned_wna <- df_tuned_wna %>%
 # który model rekomendujesz do wdrożenia???
 
 
-
-# który model rekomendujesz do wdrożenia???
-
-# rekomenduję model bazujący na danych z uzupełnionymi NA o parametrach maxdepth = 5, minbucket = 38
+# rekomenduję model bazujący na danych z uzupełnionymi NA o parametrach maxdepth = 3, minbucket = 55
 # ze względu na relatywnie wysokie auc małą różnicę pomiędzy auc na zbiorze treningowym i testowym i
 # niskim odchyleniem standardowym auc
 
@@ -340,7 +339,7 @@ df_tuned_wna <- df_tuned_wna %>%
 
 tree_final <- makeLearner('classif.rpart',
                           predict.type = 'prob',
-                          par.vals = list(cp = 0.00001, maxdepth = 5, minbucket = 38)
+                          par.vals = list(cp = 0.00001, maxdepth = 3, minbucket = 55)
                           )
 
 m_final <-train(learner = tree_final,task = task_wna, subset = ix_train)
@@ -353,7 +352,7 @@ m_final_prd_tst <- predict(m_final, newdata = credits_wna[-ix_train,], type = 'c
 
 # Założenia
 # średni kwota udzielonego kredytu 5000 PLN
-# marża na spłaconym kredycie 15% 
+# marża na spłaconym kredycie 20% 
 # strata nie niespłaconym kredycie 50%
 
 # symulujemy na zbiorze testowym
@@ -362,13 +361,13 @@ m_final_prd_tst <- predict(m_final, newdata = credits_wna[-ix_train,], type = 'c
 
 ConfusionMatrix(y_pred =m0_pr[-ix_train], y_true = credits[-ix_train,"Risk"])
 
-(68* -(5000 * 0.5)) + (132 * 5000 * 0.2)  # bez modelu tracimy na 200 kredytach 71 tys PLN
+(68* -(5000 * 0.5)) + (132 * 5000 * 0.2)  # bez modelu tracimy na 200 kredytach 38 tys PLN
 
 # M1 model bez uzupełnionych braków danych z domyślnymi parametrami rpart
 
 ConfusionMatrix(y_pred = m1_pr_tst, y_true = y_tst)
 
-(58 * -(5000*0.5)) + (122*5000*0.2)      # z tym modelem tracimy na 200 kredytach 53 tys PLN
+(58 * -(5000*0.5)) + (122*5000*0.2)      # z tym modelem tracimy na 200 kredytach 23 tys PLN
 
 # M_final model z uzupełnionymi brakami danych, nową cechą i po tuningu w mlr
 
