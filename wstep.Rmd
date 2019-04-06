@@ -1,0 +1,44 @@
+---
+title: "eRementarz 6-04-2019"
+author: "Michał Burdukiewicz"
+date: "6 kwietnia 2019"
+output: ioslides_presentation
+---
+
+## STWUR
+
+<img src="https://stwur.github.io/STWUR//images/stwur_10_18-01.svg" height="40%" width="40%"/>
+
+Pierwsze spotkanie: 30-01-2017.
+
+
+## STWUR
+
+<img src="https://github.com/STWUR/STWUR/blob/gh-pages/images/P1150767.JPG?raw=true" height="85%" width="85%"/>
+
+Pierwsze spotkanie: 30-01-2017.
+
+
+## Sponsorzy
+
+ - Wydział Biotechnologii Uniwersytetu Wrocławskiego,
+ - Kruk SA,
+ - Fundacja Why R? (whyr.pl)
+
+## Plan spotkania
+
+ - 10:00 - 11:30: przetwarzanie danych,
+ - 11:30 - 11:45: przerwa,
+ - 11:45 - 12:45: wizualizacja danych,
+ - 13:00 - 13:45: pizza,
+ - 13:45 - 14:30: wstęp do modelowania danych,
+ - 14:30 - 14:45: przerwa,
+ - 14:45 - 15:45: porównywanie modeli,
+ - 15:45 - 16:00: konkurs z nagrodami i zdjęcie grupowe,
+ - po 16:00: integracja w Cybermachinie.
+
+## Why R? 2019
+
+<img src="https://github.com/STWUR/STWUR/blob/gh-pages/images/onepager1.jpg?raw=true"" height="45%" width="45%"/>
+
+Do zobaczenia w Warszawie!
