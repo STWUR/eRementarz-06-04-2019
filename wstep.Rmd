@@ -34,7 +34,7 @@ Pierwsze spotkanie: 30-01-2017.
  - 13:45 - 14:30: wstęp do modelowania danych,
  - 14:30 - 14:45: przerwa,
  - 14:45 - 15:45: porównywanie modeli,
- - 15:45 - 16:00: konkurs z nagrodami i zdjęcie grupowe,
+ - 15:45 - 16:00: konkurs z nagrodami, zdjęcie grupowe i certyfikaty,
  - po 16:00: integracja w Cybermachinie.
 
 ## Why R? 2019
