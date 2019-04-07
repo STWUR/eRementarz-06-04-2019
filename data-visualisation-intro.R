@@ -77,6 +77,35 @@ df_count <- group_by(df, Sex, Risk, Purpose) %>%
 
 ggplot(df_count, aes(x = Sex, fill = Risk, y = count, label = count)) +
   geom_col(position = position_dodge(width = 1)) +
-  geom_text(mapping = aes(y = count/2), 
+  geom_text(mapping = aes(y = ifelse(test = count < 30,
+                                     yes = count + 15, 
+                                     no = count/2)), 
             size = 12, position = position_dodge(width = 1)) +
   facet_wrap(~ Purpose)
+
+group_by(df, Age) %>% 
+  summarise(mean_Credit.amount = mean(Credit.amount)) %>% 
+  ggplot(aes(x = Age, y = mean_Credit.amount)) +
+  geom_point()
+
+ggplot(df, aes(x = Age, y = Credit.amount, group = Age)) +
+  geom_boxplot()
+
+ggplot(df, aes(x = factor(Age), y = Credit.amount)) +
+  geom_boxplot()
+
+ggplot(df, aes(x = factor(Age), y = Credit.amount, color = Sex)) +
+  geom_boxplot()
+
+ggplot(df, aes(x = factor(Age), y = Credit.amount, fill = Sex)) +
+  geom_boxplot()
+
+ggplot(df, aes(x = Duration)) +
+  geom_bar()
+
+ggplot(df, aes(x = Duration, y = Credit.amount, 
+               group = Duration)) +
+  geom_boxplot() +
+  facet_grid(Sex ~ Risk, labeller = label_both)
+
+
